@@ -1,4 +1,6 @@
-﻿namespace ClienteExamen.Models
+﻿using Modelos;
+
+namespace ClienteExamen.Models
 {
     public class ExamenViewModel
     {

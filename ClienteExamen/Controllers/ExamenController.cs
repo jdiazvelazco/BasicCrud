@@ -3,6 +3,7 @@ using ClienteExamen.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Modelos;
 using System.Diagnostics;
 
 namespace ClienteExamen.Controllers
@@ -103,14 +104,14 @@ namespace ClienteExamen.Controllers
                connectionString: _connectionString,
                apiUrl: _apiBaseUrl
            );
-            var resultado = await clsExamen.ConsultarExamen(model.Id, model.Nombre, model.Descripcion, CancellationToken.None);
-            List<Examen> listaExamenes = resultado.Select(static o => new Examen
-                {
-                    IdExamen = (int?)o.GetType().GetProperty("IdExamen")?.GetValue(o) ?? 0,
-                    Nombre = (string?)o.GetType().GetProperty("Nombre")?.GetValue(o) ?? string.Empty,
-                    Descripcion = (string?)o.GetType().GetProperty("Descripcion")?.GetValue(o) ?? string.Empty
-                }).ToList();
-            model.ListaExamenes = listaExamenes;// resultado.Cast<Examen>().ToList();
+            var examenes = await clsExamen.ConsultarExamen(model.Id, model.Nombre, model.Descripcion, CancellationToken.None);
+            //List<Examen> examenes = resultado.Select(static o => new Examen
+            //    {
+            //        IdExamen = (int?)o.GetType().GetProperty("IdExamen")?.GetValue(o) ?? 0,
+            //        Nombre = (string?)o.GetType().GetProperty("Nombre")?.GetValue(o) ?? string.Empty,
+            //        Descripcion = (string?)o.GetType().GetProperty("Descripcion")?.GetValue(o) ?? string.Empty
+            //    }).ToList();
+            model.ListaExamenes = examenes.ToList();// resultado.Cast<Examen>().ToList();
             
             return View("Index", model);
         }

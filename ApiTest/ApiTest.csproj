@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\apiexamen2\apiexamen.csproj" />
+    <ProjectReference Include="..\apiexamen\apiexamen.csproj" />
   </ItemGroup>
 
   <ItemGroup>

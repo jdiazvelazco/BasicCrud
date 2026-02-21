@@ -11,4 +11,12 @@
     <PackageReference Include="System.Net.Http.Json" Version="10.0.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Modelos\Modelos.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -11,7 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\apiexamen2\apiexamen.csproj" />
+    <ProjectReference Include="..\apiexamen\apiexamen.csproj" />
+    <ProjectReference Include="..\Modelos\Modelos.csproj" />
   </ItemGroup>
 
 </Project>

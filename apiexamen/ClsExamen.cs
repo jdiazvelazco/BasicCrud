@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
-using System.Net.Http;
+﻿using System.Data;
 using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics.Eventing.Reader;
+using Microsoft.Data.SqlClient;
+using Modelos;
 
 namespace apiexamen
 {
@@ -129,7 +124,7 @@ namespace apiexamen
             {
                 using (var client = new HttpClient())
                 {
-                    var response = await client.PostAsync($"{_apiUrl}/ActualizarExamen?id={id}&nombre={nombre}&descripcion={descripcion}", null, cancellationToken).ConfigureAwait(false);
+                    var response = await client.PutAsync($"{_apiUrl}/ActualizarExamen?id={id}&nombre={nombre}&descripcion={descripcion}", null, cancellationToken).ConfigureAwait(false);
                     return (response.IsSuccessStatusCode);
                 }
             }
@@ -178,15 +173,16 @@ namespace apiexamen
             {
                 using (var client = new HttpClient())
                 {
-                    var response = await client.PostAsync($"{_apiUrl}/EliminarExamen?id={id}", null, cancellationToken).ConfigureAwait(false);
+                    var request = new HttpRequestMessage(HttpMethod.Delete, $"{_apiUrl}/EliminarExamen?id={id}");
+                    var response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
                     return (response.IsSuccessStatusCode);
                 }
             }
         }
 
-        public async Task<IEnumerable<object>> ConsultarExamen(int id, string nombre, string descripcion, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Examen>> ConsultarExamen(int? id, string nombre, string descripcion, CancellationToken cancellationToken)
         {
-            var examenes = new List<Object>();
+            var examenes = new List<Examen>();
             if (_useSPs)
             {
                 using (var connection = new SqlConnection(_connectionString))
@@ -201,40 +197,38 @@ namespace apiexamen
                             command.Parameters.AddWithValue("@Nombre", nombre);
                             command.Parameters.AddWithValue("@Descripcion", descripcion);
 
-
                             using (var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
                             {
                                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                                 {
-                                    examenes.Add(new
+                                    examenes.Add(new Examen
                                     {
                                         IdExamen = reader.GetInt32(reader.GetOrdinal("IdExamen")),
                                         Nombre = reader.GetString(reader.GetOrdinal("Nombre")),
                                         Descripcion = reader.GetString(reader.GetOrdinal("Descripcion"))
                                     });
                                 }
-                                //return (examenes);
                             }
                         }
                     }
                     catch (Exception ex)
                     {
                     }
-
                 }
             }
             else
             {
                 using (var client = new HttpClient())
                 {
-                    var response = await client.PostAsync($"{_apiUrl}/ConsultarExamen?id={id}&nombre={nombre}&descripcion={descripcion}", null, cancellationToken).ConfigureAwait(false);
+                    var response = await client.GetAsync($"{_apiUrl}/ConsultarExamen?id={id}&nombre={nombre}&descripcion={descripcion}", cancellationToken).ConfigureAwait(false);
                     if (response.IsSuccessStatusCode)
-                        return await response.Content.ReadFromJsonAsync<IEnumerable<object>>(cancellationToken).ConfigureAwait(false);
-
-
+                    {
+                        var result = await response.Content.ReadFromJsonAsync<IEnumerable<Examen>>(cancellationToken).ConfigureAwait(false);
+                        return result ?? Enumerable.Empty<Examen>();
+                    }
                 }
             }
-            return (examenes);
+            return examenes;
         }
     }
 }
