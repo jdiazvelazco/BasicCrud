@@ -1,9 +1,7 @@
 using apiexamen;
 using ClienteExamen.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Modelos;
 using System.Diagnostics;
 
 namespace ClienteExamen.Controllers
@@ -44,7 +42,8 @@ namespace ClienteExamen.Controllers
                 model.Mensaje = "El campo Id es obligatorio";
                 return View("Index", model);
             }
-             var clsExamen = new ClsExamen(
+            HttpContext.Session.SetString("filterUsarSPs", model.UsarSPs.ToString());
+            var clsExamen = new ClsExamen(
                 useSPs: model.UsarSPs,
                 connectionString: _connectionString,
                 apiUrl: _apiBaseUrl
@@ -65,15 +64,17 @@ namespace ClienteExamen.Controllers
                 model.Mensaje = "El campo Id es obligatorio";
                 return View("Index", model);
             }
+            HttpContext.Session.SetString("filterUsarSPs", model.UsarSPs.ToString());
             var clsExamen = new ClsExamen(
                useSPs: model.UsarSPs,
                connectionString: _connectionString,
                apiUrl: _apiBaseUrl
-           );
+            );
             var resultado = await clsExamen.ActualizarExamen((int)model.Id, model.Nombre, model.Descripcion, CancellationToken.None);
             model.Codigo = resultado ? "Actualización exitosa" : "Error en la actualización";
             model.Mensaje = model.Codigo;
-            return View("Index", model);
+            var modelRetorno = await CargarGridAsync(model.Mensaje);
+            return View("Index", modelRetorno);
         }
 
         [HttpPost]
@@ -85,6 +86,7 @@ namespace ClienteExamen.Controllers
                 model.Mensaje = "El campo Id es obligatorio";
                 return View("Index", model);
             }
+            HttpContext.Session.SetString("filterUsarSPs", model.UsarSPs.ToString());
             var clsExamen = new ClsExamen(
                useSPs: model.UsarSPs,
                connectionString: _connectionString,
@@ -93,33 +95,48 @@ namespace ClienteExamen.Controllers
             var resultado = await clsExamen.EliminarExamen((int)model.Id, CancellationToken.None);
             model.Codigo = resultado ? "Eliminación exitosa" : "Error en la eliminación";
             model.Mensaje = model.Codigo;
-            return View("Index", model);
+            var modelRetorno = await CargarGridAsync(model.Mensaje);
+            return View("Index", modelRetorno);
+            //return RedirectToAction("Index", modelRetorno);
+
         }
 
         [HttpPost]
         public async Task<IActionResult> Consultar(ExamenViewModel model)
         {
+            HttpContext.Session.SetString("filterID", model.Id?.ToString() ?? string.Empty);
+            HttpContext.Session.SetString("filterNombre", model.Nombre ?? string.Empty);
+            HttpContext.Session.SetString("filterDescripcion", model.Descripcion ?? string.Empty);
+            HttpContext.Session.SetString("filterUsarSPs", model.UsarSPs.ToString());
+
+            var modelRetorno = await CargarGridAsync("");
+            return View("Index", modelRetorno);
+        }
+
+        private async Task<ExamenViewModel> CargarGridAsync(string mensaje)
+        {
+            ExamenViewModel model = new ExamenViewModel
+            {
+                Id = int.TryParse(HttpContext.Session.GetString("filterID"), out var elId) ? elId : null,
+                Nombre = HttpContext.Session.GetString("filterNombre"),
+                Descripcion = HttpContext.Session.GetString("filterDescripcion"),
+                UsarSPs = bool.TryParse(HttpContext.Session.GetString("filterUsarSPs"), out var valor) ? valor : true,
+                Mensaje = mensaje
+            };
+
+
             var clsExamen = new ClsExamen(
                useSPs: model.UsarSPs,
                connectionString: _connectionString,
                apiUrl: _apiBaseUrl
-           );
+            );
             var examenes = await clsExamen.ConsultarExamen(model.Id, model.Nombre, model.Descripcion, CancellationToken.None);
-            //List<Examen> examenes = resultado.Select(static o => new Examen
-            //    {
-            //        IdExamen = (int?)o.GetType().GetProperty("IdExamen")?.GetValue(o) ?? 0,
-            //        Nombre = (string?)o.GetType().GetProperty("Nombre")?.GetValue(o) ?? string.Empty,
-            //        Descripcion = (string?)o.GetType().GetProperty("Descripcion")?.GetValue(o) ?? string.Empty
-            //    }).ToList();
-            model.ListaExamenes = examenes.ToList();// resultado.Cast<Examen>().ToList();
-            
-            return View("Index", model);
+            model.ListaExamenes = examenes.ToList();
+
+            return model;
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
